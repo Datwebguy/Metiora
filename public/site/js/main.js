@@ -42,6 +42,59 @@
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
 
+  /**
+   * In-page section links (About, Services, …) used to leave #services etc. in the URL.
+   * That is normal HTML anchor behavior. We scroll smoothly and keep the address bar clean
+   * (pathname only) so the bar stays agentmetiora.xyz/ while still jumping to the section.
+   */
+  const cleanUrlPath = () => {
+    const path = window.location.pathname + window.location.search;
+    if (window.location.hash || window.location.href.endsWith("#")) {
+      history.replaceState(null, "", path || "/");
+    }
+  };
+
+  const scrollToSection = (id) => {
+    if (!id) return false;
+    if (id === "top") {
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+      cleanUrlPath();
+      return true;
+    }
+    const el = document.getElementById(id);
+    if (!el) return false;
+    const navH = nav ? nav.getBoundingClientRect().height : 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - navH - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior: reduceMotion ? "auto" : "smooth" });
+    cleanUrlPath();
+    return true;
+  };
+
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a || a.getAttribute("target") === "_blank") return;
+    const href = a.getAttribute("href");
+    if (!href || href === "#") return;
+    const id = decodeURIComponent(href.slice(1));
+    if (!id) return;
+    // Only intercept if the target exists on this page
+    if (id !== "top" && !document.getElementById(id)) return;
+    e.preventDefault();
+    scrollToSection(id);
+    const drawerEl = document.querySelector(".nav-drawer");
+    const toggleEl = document.querySelector(".nav-toggle");
+    if (drawerEl) drawerEl.classList.remove("is-open");
+    if (toggleEl) toggleEl.setAttribute("aria-expanded", "false");
+  });
+
+  // Shared links like /#services still open the right section, then drop the hash from the bar
+  if (window.location.hash) {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    requestAnimationFrame(() => {
+      scrollToSection(id);
+    });
+  }
+
   /* Mobile drawer */
   const toggle = document.querySelector(".nav-toggle");
   const drawer = document.querySelector(".nav-drawer");
@@ -49,12 +102,6 @@
     toggle.addEventListener("click", () => {
       const open = drawer.classList.toggle("is-open");
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-    drawer.querySelectorAll("a").forEach((a) => {
-      a.addEventListener("click", () => {
-        drawer.classList.remove("is-open");
-        toggle.setAttribute("aria-expanded", "false");
-      });
     });
   }
 
@@ -89,18 +136,21 @@
     requestAnimationFrame(tick);
   }
 
-  /* Tilt hero panel */
-  const panel = document.querySelector(".hero-panel");
-  if (panel && !reduceMotion && window.matchMedia("(pointer: fine)").matches) {
-    panel.addEventListener("pointermove", (e) => {
-      const r = panel.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      panel.style.transform = `rotateY(${px * 8}deg) rotateX(${-py * 7}deg) translateZ(0)`;
-    });
-    panel.addEventListener("pointerleave", () => {
-      panel.style.transform = "";
-    });
+  /* Keep mosaic tiles grid-aligned (no free translate drift) */
+
+  /* Live status text on kicker */
+  const liveChip = document.querySelector("[data-live-status]");
+  if (liveChip) {
+    fetch("/health", { method: "GET" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && data.status === "HEALTHY") {
+          liveChip.textContent = "Metiora online";
+        }
+      })
+      .catch(() => {
+        liveChip.textContent = "Metiora";
+      });
   }
 
   /* Magnetic buttons */
@@ -162,20 +212,6 @@
       { rootMargin: "-30% 0px -55% 0px", threshold: 0 }
     );
     map.forEach((_, el) => io.observe(el));
-  }
-
-  /* Live health ping */
-  const liveChip = document.querySelector("[data-live-status]");
-  if (liveChip) {
-    fetch("/health", { method: "GET" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && data.status === "HEALTHY") {
-          liveChip.textContent = "API healthy";
-          liveChip.classList.add("chip--live");
-        }
-      })
-      .catch(() => {});
   }
 
   const year = document.querySelector("[data-year]");

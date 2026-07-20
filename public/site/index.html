@@ -27,7 +27,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/site/css/main.css" />
+    <link rel="stylesheet" href="/site/css/main.css?v=7" />
   </head>
   <body>
     <div class="bg-stage" aria-hidden="true">
@@ -84,48 +84,44 @@
 
       <main>
         <section class="hero">
-          <div class="container hero__grid">
-            <div>
-              <div class="eyebrow"><i></i> OKX.AI ASP · X Layer x402</div>
-              <h1>AI Operating Partner for <em>founders</em></h1>
+          <div class="container hero__stage">
+            <div class="hero__copy">
+              <p class="hero__kicker" data-live-status>Metiora online</p>
+              <h1>
+                <span class="hero__line">Memory that ships</span>
+                <span class="hero__line hero__line--accent"><em>founder work</em></span>
+              </h1>
               <p class="hero__lead">
-                Metiora turns founder and startup memory into board ready packages: blueprints, investor materials, grants, partnerships, token design, and health reviews. Buyers pay with USDT0 on X Layer through x402.
+                Six paid packages from company context for the OKX agent marketplace.
               </p>
               <div class="hero__cta">
-                <a class="btn btn--primary" data-magnetic href="#services">Explore services</a>
-                <a class="btn btn--ghost" data-magnetic href="#how">How it works</a>
-              </div>
-              <div class="hero__meta">
-                <span><strong>Network</strong> eip155:196</span>
-                <span><strong>Token</strong> USDT0 0x779ded…</span>
-                <span><strong>Agent</strong> #6860 Metiora</span>
+                <a class="btn btn--primary" data-magnetic href="#services">View services</a>
+                <a class="btn btn--ghost" data-magnetic href="/docs/">Read docs</a>
               </div>
             </div>
 
-            <div class="hero-panel" aria-label="Live product panel">
-              <div class="hero-panel__top">
-                <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
-                <div class="hero-panel__label">agentmetiora.xyz</div>
+            <div class="hero-mosaic" aria-label="Metiora services">
+              <a class="mosaic-tile mosaic-tile--a" href="#services">
+                <span class="mosaic-tile__name">Blueprint</span>
+              </a>
+              <a class="mosaic-tile mosaic-tile--b" href="#services">
+                <span class="mosaic-tile__name">Investor</span>
+              </a>
+              <a class="mosaic-tile mosaic-tile--c" href="#services">
+                <span class="mosaic-tile__name">Grant</span>
+              </a>
+              <a class="mosaic-tile mosaic-tile--d" href="#services">
+                <span class="mosaic-tile__name">Partner</span>
+              </a>
+              <div class="hero-monogram">
+                <img src="/site/logo.png" width="104" height="104" alt="Metiora" />
               </div>
-              <div class="hero-panel__body">
-                <div class="ticker">
-                  <span class="chip chip--live" data-live-status>Checking API…</span>
-                  <span class="chip">x402 enabled</span>
-                  <span class="chip">6 products</span>
-                </div>
-                <div class="stat-row">
-                  <div class="stat"><b>$7</b><span>Blueprint</span></div>
-                  <div class="stat"><b>$3</b><span>Grant / Partner / Token</span></div>
-                  <div class="stat"><b>$2</b><span>Health</span></div>
-                </div>
-                <pre class="code-block" aria-label="Example buyer flow"><span class="c">// 1. Bootstrap profiles</span>
-POST /v1/a2mcp/bootstrap
-{ <span class="k">"founder"</span>: {…}, <span class="k">"startup"</span>: {…} }
-
-<span class="c">// 2. Pay x402 · call a product</span>
-POST /v1/a2mcp/startup-blueprint
-{ <span class="s">"founderProfileId"</span>, <span class="s">"startupProfileId"</span> }</pre>
-              </div>
+              <a class="mosaic-tile mosaic-tile--e" href="#services">
+                <span class="mosaic-tile__name">Token</span>
+              </a>
+              <a class="mosaic-tile mosaic-tile--f" href="#services">
+                <span class="mosaic-tile__name">Health</span>
+              </a>
             </div>
           </div>
         </section>
@@ -395,6 +391,6 @@ POST /v1/a2mcp/startup-blueprint
       </footer>
     </div>
 
-    <script src="/site/js/main.js" defer></script>
+    <script src="/site/js/main.js?v=7" defer></script>
   </body>
 </html>

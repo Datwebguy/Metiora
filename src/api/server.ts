@@ -224,7 +224,14 @@ export async function buildApiServer(
     const ext = path.extname(filePath).toLowerCase();
     const type = siteMime[ext] ?? 'application/octet-stream';
     void reply.header('Content-Type', type);
-    void reply.header('Cache-Control', ext === '.html' ? 'public, max-age=60' : 'public, max-age=86400');
+    // Short cache for CSS/JS so design fixes show up without multi-day browser cache
+    const cache =
+      ext === '.html'
+        ? 'public, max-age=30'
+        : ext === '.css' || ext === '.js'
+          ? 'public, max-age=120, must-revalidate'
+          : 'public, max-age=86400';
+    void reply.header('Cache-Control', cache);
     return reply.send(createReadStream(filePath));
   };
 

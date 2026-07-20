@@ -3,18 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Docs · Metiora</title>
-    <meta name="description" content="Metiora documentation for buyers and operators on OKX.AI A2MCP and x402." />
+    <title>Documentation · Metiora</title>
+    <meta
+      name="description"
+      content="Official Metiora documentation: product overview, buyer guide, service catalog, payments, and operator setup for the OKX.AI marketplace."
+    />
     <meta name="theme-color" content="#050505" />
     <link rel="icon" href="/site/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/site/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/site/favicon-16.png" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/site/apple-touch-icon.png" sizes="180x180" />
     <link rel="manifest" href="/site/site.webmanifest" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/site/css/main.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/site/css/main.css?v=7" />
   </head>
   <body>
     <div class="bg-stage" aria-hidden="true">
@@ -56,132 +62,282 @@
       </div>
 
       <main class="container">
-        <div class="page-hero">
+        <header class="page-hero page-hero--doc">
           <div class="section-kicker">Documentation</div>
-          <h1>How Metiora works in production</h1>
-          <p>Buyer flow, payment rules, operator setup, and listing checklist for OKX.AI ASP agent #6860.</p>
-        </div>
+          <h1>Metiora product documentation</h1>
+          <p>
+            This guide explains what Metiora is, how buyers purchase packages on the OKX.AI marketplace, and how the live
+            service is structured in production.
+          </p>
+          <div class="doc-meta">
+            <span>Version 1.0</span>
+            <span>Live base: agentmetiora.xyz</span>
+            <span>ASP agent #6860</span>
+          </div>
+        </header>
 
         <div class="page-layout">
-          <aside class="side-nav" aria-label="Docs sections">
-            <h3>On this page</h3>
-            <a href="#overview">Overview</a>
-            <a href="#quickstart">Quickstart</a>
-            <a href="#endpoints">Endpoints</a>
-            <a href="#payments">Payments</a>
-            <a href="#body">Request body</a>
-            <a href="#operators">Operators</a>
-            <a href="#listing">Marketplace listing</a>
-            <a href="#security">Security</a>
+          <aside class="side-nav" aria-label="Table of contents">
+            <p class="toc-label">Contents</p>
+            <a href="#introduction">1. Introduction</a>
+            <a href="#audience">2. Who this is for</a>
+            <a href="#services">3. Services</a>
+            <a href="#buyer-guide">4. Buyer guide</a>
+            <a href="#api-reference">5. API reference</a>
+            <a href="#payments">6. Payments</a>
+            <a href="#operators">7. Operators</a>
+            <a href="#marketplace">8. Marketplace listing</a>
+            <a href="#security">9. Security</a>
+            <a href="#support">10. Support</a>
           </aside>
 
           <div class="prose">
-            <article class="content-card" id="overview">
-              <h2>Overview</h2>
+            <article class="content-card" id="introduction">
+              <h2>1. Introduction</h2>
               <p>
-                Metiora is a headless Agent Service Provider for founders. Public marketplace routes live under <code>/v1/a2mcp/*</code> and charge with x402 on X Layer. Private operator routes need a Metiora API key.
+                Metiora is an AI operating partner for founders, delivered as an Agent Service Provider on the OKX.AI
+                marketplace. The service keeps structured founder and startup memory, then generates practical packages
+                such as blueprints, investor materials, grant applications, partnership outreach, token planning, and
+                health reviews.
               </p>
               <p>
-                Live base URL: <code>https://agentmetiora.xyz</code>
+                Buyers interact through public HTTPS endpoints. Product calls are gated by x402 payment on X Layer.
+                Operators manage private routes with a Metiora API key. The public website, documentation, blog, and API
+                all run on <strong>https://agentmetiora.xyz</strong>.
+              </p>
+              <p>
+                Packages are returned as structured JSON and Markdown so agents and humans can both consume the
+                output. Generation is designed to finish within marketplace time windows and to return clear JSON
+                errors instead of hanging connections.
               </p>
             </article>
 
-            <article class="content-card" id="quickstart">
-              <h2>Buyer quickstart</h2>
-              <ol style="padding-left:1.2rem;color:var(--text-muted);font-size:0.95rem;line-height:1.7">
-                <li>Create founder and startup profiles with bootstrap.</li>
-                <li>List products from the services catalog.</li>
-                <li>POST a product without payment to receive HTTP 402.</li>
-                <li>Complete x402 payment with the OKX agent wallet flow.</li>
-                <li>Replay the request with payment headers and receive JSON plus Markdown.</li>
-              </ol>
-              <pre>POST /v1/a2mcp/bootstrap
+            <article class="content-card" id="audience">
+              <h2>2. Who this is for</h2>
+              <h3>Marketplace buyers</h3>
+              <p>
+                Agents and users purchasing founder packages through OKX.AI. You do not need the Metiora operator API
+                key. You create profile IDs with bootstrap, pay with x402, and receive deliverables.
+              </p>
+              <h3>ASP operators</h3>
+              <p>
+                People running this deployment. You hold production secrets, monitor health, and may use authenticated
+                admin routes for memory and internal tooling.
+              </p>
+              <h3>Integrators</h3>
+              <p>
+                Developers wiring Metiora into agent workflows. Use the services catalog as the source of truth for
+                URLs, prices, and required body fields.
+              </p>
+            </article>
+
+            <article class="content-card" id="services">
+              <h2>3. Services</h2>
+              <p>
+                Metiora currently lists six paid products. Prices are in USDT. Each product requires a founder profile
+                and a startup profile after payment. An optional blueprint ID may be provided when a package should
+                reference a prior blueprint.
+              </p>
+
+              <h3>Startup Blueprint · $7</h3>
+              <p>
+                <code>POST /v1/a2mcp/startup-blueprint</code><br />
+                Produces a strategic startup blueprint from company memory. Useful when founders need a clear,
+                shareable plan in dual JSON and Markdown form.
+              </p>
+
+              <h3>Investor Ready Package · $7</h3>
+              <p>
+                <code>POST /v1/a2mcp/investor-ready</code><br />
+                Builds investor facing materials with readiness scoring and memo style narrative for fundraising
+                conversations.
+              </p>
+
+              <h3>Grant Builder Package · $3</h3>
+              <p>
+                <code>POST /v1/a2mcp/grant-builder</code><br />
+                Creates grant oriented content with impact narrative and application structure for program and fund
+                applications.
+              </p>
+
+              <h3>Partnership Studio · $3</h3>
+              <p>
+                <code>POST /v1/a2mcp/partnership-studio</code><br />
+                Generates partnership outreach materials covering fit and mutual value for alliance discussions.
+              </p>
+
+              <h3>Token Launch Kit · $3</h3>
+              <p>
+                <code>POST /v1/a2mcp/token-launch-kit</code><br />
+                Outlines token strategy, utility thinking, and distribution notes for teams exploring token design.
+              </p>
+
+              <h3>Startup Health Review · $2</h3>
+              <p>
+                <code>POST /v1/a2mcp/startup-health</code><br />
+                Runs a multi dimension health assessment with scores and priority actions for execution tracking.
+              </p>
+
+              <p>
+                The live catalog at <a href="/v1/a2mcp/services" style="color: var(--lime)">/v1/a2mcp/services</a>
+                always reflects production prices and endpoints. Marketplace registration should copy those values
+                exactly.
+              </p>
+            </article>
+
+            <article class="content-card" id="buyer-guide">
+              <h2>4. Buyer guide</h2>
+              <p>Follow this sequence for a complete purchase path.</p>
+
+              <h3>Step 1 · Create profiles</h3>
+              <p>
+                Call bootstrap once per founder and startup pair. The service is public and does not require payment.
+              </p>
+              <pre>POST https://agentmetiora.xyz/v1/a2mcp/bootstrap
 Content-Type: application/json
 
 {
-  "founder": { "email": "you@example.com", "fullName": "Ada Founder" },
-  "startup": { "name": "Acme Labs", "industry": "AI" }
+  "founder": {
+    "email": "founder@example.com",
+    "fullName": "Ada Founder"
+  },
+  "startup": {
+    "name": "Acme Labs",
+    "industry": "AI"
+  }
 }</pre>
-            </article>
-
-            <article class="content-card" id="endpoints">
-              <h2>Public endpoints</h2>
-              <ul>
-                <li><code>GET /health</code> · liveness and x402 status</li>
-                <li><code>GET /v1/a2mcp/services</code> · catalog, prices, payTo, fee token</li>
-                <li><code>POST /v1/a2mcp/bootstrap</code> · create profile IDs</li>
-                <li><code>POST /v1/a2mcp/tools</code> · listable operations</li>
-                <li><code>POST /v1/a2mcp/startup-blueprint</code> · 7 USDT</li>
-                <li><code>POST /v1/a2mcp/investor-ready</code> · 7 USDT</li>
-                <li><code>POST /v1/a2mcp/grant-builder</code> · 3 USDT</li>
-                <li><code>POST /v1/a2mcp/partnership-studio</code> · 3 USDT</li>
-                <li><code>POST /v1/a2mcp/token-launch-kit</code> · 3 USDT</li>
-                <li><code>POST /v1/a2mcp/startup-health</code> · 2 USDT</li>
-                <li><code>GET /avatar.png</code> · marketplace avatar</li>
-              </ul>
-              <p>Do not list smoke test as a marketplace product. Keep it internal for payment path checks only.</p>
-            </article>
-
-            <article class="content-card" id="payments">
-              <h2>Payments</h2>
-              <ul>
-                <li>Network: <code>eip155:196</code> (X Layer mainnet)</li>
-                <li>Fee token: <code>0x779ded0c9e1022225f8e0630b35a9b54be713736</code> (USDT0)</li>
-                <li>Seller payTo: wallet set via Fly secret <code>PAY_TO_ADDRESS</code></li>
-                <li>Scheme: x402 exact through the OKX facilitator SDK</li>
-              </ul>
               <p>
-                Register the same token, network, and full HTTPS URLs that the live 402 response returns. Mismatched fee tokens are a common rejection reason.
+                The response includes <code>founderProfileId</code> and <code>startupProfileId</code>. If the email
+                already exists, the founder is reused and a new startup is attached to that founder.
+              </p>
+
+              <h3>Step 2 · Choose a product</h3>
+              <p>
+                Read the services catalog for full URLs and prices. Do not invent paths. Only listable products appear
+                in the catalog.
+              </p>
+
+              <h3>Step 3 · Pay and execute</h3>
+              <p>
+                POST the product endpoint with the profile IDs. Without a valid payment header, the API returns HTTP
+                402 with payment requirements. Complete the x402 payment using the OKX agent wallet flow, then replay
+                the request with payment headers. On success you receive the package payload.
+              </p>
+
+              <h3>Step 4 · Use the deliverable</h3>
+              <p>
+                Responses include structured content and Markdown. If company memory is sparse, Metiora still returns a
+                package and may include a readiness notice so the buyer is not blocked after paying.
               </p>
             </article>
 
-            <article class="content-card" id="body">
-              <h2>Request body after payment</h2>
+            <article class="content-card" id="api-reference">
+              <h2>5. API reference</h2>
+              <h3>Public discovery</h3>
+              <ul>
+                <li><code>GET /health</code> · service health and payment capability</li>
+                <li><code>GET /v1/a2mcp/services</code> · catalog of listable products</li>
+                <li><code>POST /v1/a2mcp/tools</code> · operations list for agent tooling</li>
+                <li><code>POST /v1/a2mcp/bootstrap</code> · create founder and startup IDs</li>
+                <li><code>GET /avatar.png</code> · marketplace avatar asset</li>
+              </ul>
+
+              <h3>Paid product methods</h3>
+              <p>All of the following are <code>POST</code> and require x402 payment for delivery:</p>
+              <ul>
+                <li><code>/v1/a2mcp/startup-blueprint</code></li>
+                <li><code>/v1/a2mcp/investor-ready</code></li>
+                <li><code>/v1/a2mcp/grant-builder</code></li>
+                <li><code>/v1/a2mcp/partnership-studio</code></li>
+                <li><code>/v1/a2mcp/token-launch-kit</code></li>
+                <li><code>/v1/a2mcp/startup-health</code></li>
+              </ul>
+
+              <h3>Request body after payment</h3>
               <pre>{
   "founderProfileId": "uuid",
   "startupProfileId": "uuid",
-  "blueprintId": "uuid (optional)"
+  "blueprintId": "uuid"
 }</pre>
               <p>
-                Create the UUIDs with bootstrap first. Ownership is enforced: the startup must belong to the founder. Generation soft fails on low readiness so buyers still receive a package with a readiness notice.
+                <code>blueprintId</code> is optional. The startup must belong to the founder. Cross profile requests
+                are rejected.
+              </p>
+            </article>
+
+            <article class="content-card" id="payments">
+              <h2>6. Payments</h2>
+              <p>
+                Metiora uses the OKX x402 exact scheme on X Layer mainnet. Unpaid product calls return payment required
+                responses that describe the network, amount, and receiving address for that deployment.
+              </p>
+              <ul>
+                <li><strong>Network:</strong> eip155:196 (X Layer mainnet)</li>
+                <li><strong>Fee token:</strong> USDT0 at <code>0x779ded0c9e1022225f8e0630b35a9b54be713736</code></li>
+                <li><strong>Seller payTo:</strong> configured in production as <code>PAY_TO_ADDRESS</code></li>
+              </ul>
+              <p>
+                Marketplace listings must use the same fee token and the same full HTTPS product URLs returned by the
+                live catalog. Token mismatches and unreachable endpoints are common reasons for review failure.
               </p>
             </article>
 
             <article class="content-card" id="operators">
-              <h2>Operator notes</h2>
+              <h2>7. Operators</h2>
               <p>
-                Production requires <code>METIORA_API_KEY</code> (min 16 chars), Postgres <code>DATABASE_URL</code>, and OKX facilitator credentials. Set secrets with Fly secrets, never in the git repo.
+                Production requires environment configuration for the database, operator API key, OKX facilitator
+                credentials, and payTo wallet. These values belong in host secrets, never in the public git repository.
               </p>
-              <pre>fly secrets set METIORA_API_KEY=... PAY_TO_ADDRESS=0x... \
-  OKX_API_KEY=... OKX_SECRET_KEY=... OKX_PASSPHRASE=...</pre>
               <p>
-                Protected routes accept <code>x-api-key</code> or <code>Authorization: Bearer</code>. CORS defaults to empty origins in production for server to server and agent clients.
+                Private routes accept either header form:
+              </p>
+              <pre>x-api-key: YOUR_KEY
+
+Authorization: Bearer YOUR_KEY</pre>
+              <p>
+                Local development uses <code>.env</code> copied from <code>.env.example</code>. See the GitHub
+                repository README for install commands and the project map.
               </p>
             </article>
 
-            <article class="content-card" id="listing">
-              <h2>Marketplace listing checklist</h2>
+            <article class="content-card" id="marketplace">
+              <h2>8. Marketplace listing</h2>
+              <p>
+                Metiora is registered as ASP agent <strong>#6860</strong>. When preparing or updating a listing:
+              </p>
               <ul>
-                <li>Avatar: <code>https://agentmetiora.xyz/avatar.png</code></li>
-                <li>All six product URLs on agentmetiora.xyz (not localhost)</li>
-                <li>Prices match catalog ($7 / $7 / $3 / $3 / $3 / $2)</li>
-                <li>Unpaid POST returns 402, not 404 or hang</li>
-                <li>Required body fields published in listing metadata</li>
-                <li>Agent stays online during OKX review (Fly min machines running)</li>
+                <li>Use avatar <code>https://agentmetiora.xyz/avatar.png</code></li>
+                <li>Register only the six product endpoints on agentmetiora.xyz</li>
+                <li>Match catalog prices exactly</li>
+                <li>Confirm unpaid POSTs return 402, not 404 or timeout</li>
+                <li>Publish required body fields in listing metadata</li>
+                <li>Keep the deployment online during review</li>
               </ul>
             </article>
 
             <article class="content-card" id="security">
-              <h2>Security boundaries</h2>
+              <h2>9. Security model</h2>
+              <p>
+                Metiora separates public marketplace access from private operator access.
+              </p>
               <ul>
-                <li>Marketplace paths: public, payment gated</li>
-                <li>Internal memory and legacy /okx routes: API key required</li>
-                <li>Never commit .env, API keys, or facilitator secrets</li>
-                <li>Metrics stay private unless METRICS_PUBLIC=true</li>
+                <li><strong>Public:</strong> website, health, avatar, catalog, bootstrap, paid A2MCP products</li>
+                <li><strong>Private:</strong> memory administration and internal helpers behind the API key</li>
               </ul>
               <p>
-                Source: <a data-github href="https://github.com/Datwebguy/Metiora" style="color:var(--lime)">github.com/Datwebguy/Metiora</a>
+                Do not commit <code>.env</code>, local key dumps, facilitator secrets, or wallet private keys. The
+                public repository ignores those paths by default. If a secret is exposed, rotate it immediately.
               </p>
+            </article>
+
+            <article class="content-card" id="support">
+              <h2>10. Support and links</h2>
+              <ul>
+                <li>Product site: <a href="https://agentmetiora.xyz/" style="color: var(--lime)">agentmetiora.xyz</a></li>
+                <li>Source: <a data-github href="https://github.com/Datwebguy/Metiora" style="color: var(--lime)">github.com/Datwebguy/Metiora</a></li>
+                <li>OKX OnchainOS: <a href="https://web3.okx.com/onchainos" style="color: var(--lime)" target="_blank" rel="noopener noreferrer">web3.okx.com/onchainos</a></li>
+                <li>Contact: <a href="mailto:asp@agentmetiora.xyz" style="color: var(--lime)">asp@agentmetiora.xyz</a></li>
+              </ul>
             </article>
           </div>
         </div>
@@ -189,7 +345,7 @@ Content-Type: application/json
 
       <footer class="footer">
         <div class="container footer__inner">
-          <p>© <span data-year>2026</span> Metiora</p>
+          <p>© <span data-year>2026</span> Metiora · Documentation</p>
           <div class="footer__links">
             <a href="/">Home</a>
             <a href="/blog/">Blog</a>
@@ -198,6 +354,6 @@ Content-Type: application/json
         </div>
       </footer>
     </div>
-    <script src="/site/js/main.js" defer></script>
+    <script src="/site/js/main.js?v=7" defer></script>
   </body>
 </html>
