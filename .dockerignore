@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+.prisma
+coverage
+.gemini
+*.log
+*.tmp
+tmp
+*.md
+docs
+tests

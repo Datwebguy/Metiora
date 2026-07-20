@@ -1,0 +1,748 @@
+generator client {
+  provider      = "prisma-client-js"
+  // native = local Windows/macOS; linux-musl-openssl-3.0.x = Fly node:22-alpine
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SystemHealthCheck {
+  id        String   @id @default(uuid())
+  checkedAt DateTime @default(now())
+  status    String
+}
+
+// ==========================================
+// USER MEMORY ENGINE MODELS
+// ==========================================
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+  UNKNOWN
+}
+
+enum ApprovalStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
+enum HistoryType {
+  PREVIOUS_STARTUP
+  ACCELERATOR
+  AWARD
+  INVESTMENT
+  PUBLIC_SPEAKING
+}
+
+model FounderProfile {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  identity           FounderIdentity?
+  professional       FounderProfessional?
+  personal           FounderPersonal?
+  communication      FounderCommunication?
+  publicPresence     FounderPublicPresence?
+  historyEntries     FounderHistoryEntry[]
+  preferences        FounderPreferences?
+  versions           FounderMemoryVersion[]
+  pendingUpdates     FounderPendingUpdate[]
+  startups           StartupProfile[]
+  conversations      ConversationSession[]
+  blueprints         StartupBlueprintRecord[]
+  investorPackages   InvestorPackageRecord[]
+  grantPackages      GrantPackageRecord[]
+  partnershipPackages PartnershipPackageRecord[]
+  tokenKits          TokenLaunchKitRecord[]
+  healthReports      StartupHealthReportRecord[]
+}
+
+model FounderIdentity {
+  id               String          @id @default(uuid())
+  founderProfileId String          @unique
+  fullName         String
+  preferredName    String?
+  title            String?
+  bio              String?
+  country          String?
+  timezone         String?
+  confidence       ConfidenceLevel @default(HIGH)
+  source           String          @default("user_explicit")
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderProfessional {
+  id               String   @id @default(uuid())
+  founderProfileId String   @unique
+  skills           String[] @default([])
+  industries       String[] @default([])
+  experienceYears  Int?
+  areasOfExpertise String[] @default([])
+  certifications   String[] @default([])
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderPersonal {
+  id               String  @id @default(uuid())
+  founderProfileId String  @unique
+  story            String?
+  personalMission  String?
+  leadershipStyle  String?
+  longTermVision   String?
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderCommunication {
+  id                String  @id @default(uuid())
+  founderProfileId  String  @unique
+  writingStyle      String?
+  tone              String?
+  preferredLanguage String  @default("en")
+  documentStyle     String?
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderPublicPresence {
+  id               String  @id @default(uuid())
+  founderProfileId String  @unique
+  websiteUrl       String?
+  twitterHandle    String?
+  linkedinUrl      String?
+  githubUrl        String?
+  portfolioUrl     String?
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderHistoryEntry {
+  id               String      @id @default(uuid())
+  founderProfileId String
+  type             HistoryType
+  organizationName String
+  role             String
+  year             Int?
+  details          String?
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderPreferences {
+  id                  String   @id @default(uuid())
+  founderProfileId    String   @unique
+  brandStyle          String?
+  investorPreferences String[] @default([])
+  grantPreferences    String[] @default([])
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+model FounderMemoryVersion {
+  id               String   @id @default(uuid())
+  founderProfileId String
+  versionNumber    Int
+  snapshotJson     Json
+  changeSummary    String
+  createdAt        DateTime @default(now())
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([founderProfileId, versionNumber])
+}
+
+model FounderPendingUpdate {
+  id               String         @id @default(uuid())
+  founderProfileId String
+  proposedDataJson Json
+  conflictsJson    Json
+  status           ApprovalStatus @default(PENDING)
+  source           String         @default("ai_inferred")
+  createdAt        DateTime       @default(now())
+  resolvedAt       DateTime?
+
+  founderProfile FounderProfile @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// STARTUP MEMORY ENGINE MODELS
+// ==========================================
+
+model StartupProfile {
+  id                     String    @id @default(uuid())
+  founderProfileId       String
+  name                   String
+  tagline                String?
+  oneSentenceDescription String?
+  websiteUrl             String?
+  industry               String
+  stage                  String    @default("IDEATION")
+  headquarters           String?
+  foundedDate            DateTime?
+  version                Int       @default(1)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  founder            FounderProfile             @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  vision             StartupVision?
+  problem            StartupProblem?
+  solution           StartupSolution?
+  customers          StartupCustomers?
+  businessModel      StartupBusinessModel?
+  market             StartupMarket?
+  roadmap            StartupRoadmap?
+  funding            StartupFunding?
+  partnerships       StartupPartnerships?
+  tokenomics         StartupTokenomics?
+  deliverables       StartupDeliverableRecord[]
+  versions           StartupMemoryVersion[]
+  pendingUpdates     StartupPendingUpdate[]
+  conversations      ConversationSession[]
+  blueprints         StartupBlueprintRecord[]
+  investorPackages   InvestorPackageRecord[]
+  grantPackages      GrantPackageRecord[]
+  partnershipPackages PartnershipPackageRecord[]
+  tokenKits          TokenLaunchKitRecord[]
+  healthReports      StartupHealthReportRecord[]
+}
+
+model StartupVision {
+  id               String   @id @default(uuid())
+  startupProfileId String   @unique
+  mission          String?
+  vision           String?
+  coreValues       String[] @default([])
+  longTermGoals    String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupProblem {
+  id                   String   @id @default(uuid())
+  startupProfileId     String   @unique
+  problemStatement     String?
+  existingAlternatives String[] @default([])
+  marketPainPoints     String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupSolution {
+  id                   String   @id @default(uuid())
+  startupProfileId     String   @unique
+  productDescription   String?
+  uniqueValueProp      String?
+  competitiveAdvantage String?
+  coreFeatures         String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupCustomers {
+  id                  String   @id @default(uuid())
+  startupProfileId    String   @unique
+  targetAudience      String?
+  idealCustomerProfile String?
+  customerPersonas    Json?
+  geographicMarkets   String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupBusinessModel {
+  id                   String   @id @default(uuid())
+  startupProfileId     String   @unique
+  businessModel        String?
+  revenueModel         String?
+  pricingStrategy      String?
+  salesStrategy        String?
+  distributionStrategy String?
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupMarket {
+  id               String   @id @default(uuid())
+  startupProfileId String   @unique
+  competitors      String[] @default([])
+  marketPosition   String?
+  marketSize       String?
+  marketTrends     String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupRoadmap {
+  id               String   @id @default(uuid())
+  startupProfileId String   @unique
+  currentStage     String?
+  milestones       Json?
+  upcomingReleases String[] @default([])
+  longTermRoadmap  String?
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupFunding {
+  id                  String   @id @default(uuid())
+  startupProfileId    String   @unique
+  fundingStage        String?
+  previousFunding     String?
+  investors           String[] @default([])
+  grants              String[] @default([])
+  acceleratorPrograms String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupPartnerships {
+  id                    String   @id @default(uuid())
+  startupProfileId      String   @unique
+  existingPartners      String[] @default([])
+  desiredPartners       String[] @default([])
+  strategicOpportunities String[] @default([])
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupTokenomics {
+  id               String   @id @default(uuid())
+  startupProfileId String   @unique
+  tokenName        String?
+  tokenSymbol      String?
+  utility          String?
+  governance       String?
+  distribution     Json?
+  treasury         String?
+  vesting          String?
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupDeliverableRecord {
+  id               String   @id @default(uuid())
+  startupProfileId String
+  serviceType      String
+  title            String
+  contentMarkdown  String
+  versionNumber    Int
+  metadataJson     Json?
+  createdAt        DateTime @default(now())
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+model StartupMemoryVersion {
+  id               String   @id @default(uuid())
+  startupProfileId String
+  versionNumber    Int
+  snapshotJson     Json
+  changeSummary    String
+  createdAt        DateTime @default(now())
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([startupProfileId, versionNumber])
+}
+
+model StartupPendingUpdate {
+  id               String         @id @default(uuid())
+  startupProfileId String
+  proposedDataJson Json
+  conflictsJson    Json
+  status           ApprovalStatus @default(PENDING)
+  source           String         @default("ai_inferred")
+  createdAt        DateTime       @default(now())
+  resolvedAt       DateTime?
+
+  startupProfile StartupProfile @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// CONVERSATION ENGINE MODELS
+// ==========================================
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum MessageSender {
+  FOUNDER
+  AGENT
+}
+
+model ConversationSession {
+  id               String        @id @default(uuid())
+  founderProfileId String
+  startupProfileId String
+  status           SessionStatus @default(ACTIVE)
+  currentMode      String        @default("STRATEGIC_DISCUSSION")
+  currentObjective String?
+  currentWorkflow  String?
+  resumePointJson  Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  founder  FounderProfile        @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  startup  StartupProfile        @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  messages ConversationMessage[]
+}
+
+model ConversationMessage {
+  id          String        @id @default(uuid())
+  sessionId   String
+  sender      MessageSender
+  contentText String
+  questionKey String?
+  isAnswered  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  session ConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// STARTUP BLUEPRINT SERVICE MODELS
+// ==========================================
+
+model StartupBlueprintRecord {
+  id               String         @id @default(uuid())
+  startupProfileId String
+  founderProfileId String
+  version          Int            @default(1)
+  status           ApprovalStatus @default(PENDING)
+  contentJson      Json
+  contentMarkdown  String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  startup  StartupProfile           @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  founder  FounderProfile           @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  versions StartupBlueprintVersion[]
+}
+
+model StartupBlueprintVersion {
+  id              String   @id @default(uuid())
+  blueprintId     String
+  versionNumber   Int
+  contentJson     Json
+  contentMarkdown String
+  changeSummary   String
+  createdAt       DateTime @default(now())
+
+  blueprint StartupBlueprintRecord @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+
+  @@unique([blueprintId, versionNumber])
+}
+
+// ==========================================
+// INVESTOR READY SERVICE MODELS
+// ==========================================
+
+model InvestorPackageRecord {
+  id               String         @id @default(uuid())
+  startupProfileId String
+  founderProfileId String
+  blueprintId      String?
+  version          Int            @default(1)
+  status           ApprovalStatus @default(PENDING)
+  readinessScore   Int
+  contentJson      Json
+  contentMarkdown  String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  startup  StartupProfile           @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  founder  FounderProfile           @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  versions InvestorPackageVersion[]
+}
+
+model InvestorPackageVersion {
+  id              String   @id @default(uuid())
+  packageId       String
+  versionNumber   Int
+  contentJson     Json
+  contentMarkdown String
+  changeSummary   String
+  createdAt       DateTime @default(now())
+
+  package InvestorPackageRecord @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, versionNumber])
+}
+
+// ==========================================
+// GRANT BUILDER SERVICE MODELS
+// ==========================================
+
+model GrantPackageRecord {
+  id               String         @id @default(uuid())
+  startupProfileId String
+  founderProfileId String
+  blueprintId      String?
+  version          Int            @default(1)
+  status           ApprovalStatus @default(PENDING)
+  readinessScore   Int
+  contentJson      Json
+  contentMarkdown  String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  startup  StartupProfile        @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  founder  FounderProfile        @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  versions GrantPackageVersion[]
+}
+
+model GrantPackageVersion {
+  id              String   @id @default(uuid())
+  packageId       String
+  versionNumber   Int
+  contentJson     Json
+  contentMarkdown String
+  changeSummary   String
+  createdAt       DateTime @default(now())
+
+  package GrantPackageRecord @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, versionNumber])
+}
+
+// ==========================================
+// PARTNERSHIP STUDIO SERVICE MODELS
+// ==========================================
+
+model PartnershipPackageRecord {
+  id               String         @id @default(uuid())
+  startupProfileId String
+  founderProfileId String
+  blueprintId      String?
+  version          Int            @default(1)
+  status           ApprovalStatus @default(PENDING)
+  readinessScore   Int
+  contentJson      Json
+  contentMarkdown  String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  startup  StartupProfile              @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  founder  FounderProfile              @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  versions PartnershipPackageVersion[]
+}
+
+model PartnershipPackageVersion {
+  id              String   @id @default(uuid())
+  packageId       String
+  versionNumber   Int
+  contentJson     Json
+  contentMarkdown String
+  changeSummary   String
+  createdAt       DateTime @default(now())
+
+  package PartnershipPackageRecord @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, versionNumber])
+}
+
+// ==========================================
+// TOKEN LAUNCH KIT SERVICE MODELS
+// ==========================================
+
+model TokenLaunchKitRecord {
+  id               String         @id @default(uuid())
+  startupProfileId String
+  founderProfileId String
+  blueprintId      String?
+  version          Int            @default(1)
+  status           ApprovalStatus @default(PENDING)
+  readinessScore   Int
+  contentJson      Json
+  contentMarkdown  String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  startup  StartupProfile          @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  founder  FounderProfile          @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  versions TokenLaunchKitVersion[]
+}
+
+model TokenLaunchKitVersion {
+  id              String   @id @default(uuid())
+  kitId           String
+  versionNumber   Int
+  contentJson     Json
+  contentMarkdown String
+  changeSummary   String
+  createdAt       DateTime @default(now())
+
+  kit TokenLaunchKitRecord @relation(fields: [kitId], references: [id], onDelete: Cascade)
+
+  @@unique([kitId, versionNumber])
+}
+
+// ==========================================
+// STARTUP HEALTH SERVICE MODELS
+// ==========================================
+
+model StartupHealthReportRecord {
+  id                 String         @id @default(uuid())
+  startupProfileId   String
+  founderProfileId   String
+  blueprintId        String?
+  version            Int            @default(1)
+  status             ApprovalStatus @default(PENDING)
+  overallScore       Int
+  categoryScoresJson Json
+  contentJson        Json
+  contentMarkdown    String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  startup  StartupProfile             @relation(fields: [startupProfileId], references: [id], onDelete: Cascade)
+  founder  FounderProfile             @relation(fields: [founderProfileId], references: [id], onDelete: Cascade)
+  versions StartupHealthReportVersion[]
+}
+
+model StartupHealthReportVersion {
+  id                 String   @id @default(uuid())
+  reportId           String
+  versionNumber      Int
+  overallScore       Int
+  categoryScoresJson Json
+  contentJson        Json
+  contentMarkdown    String
+  changeSummary      String
+  createdAt          DateTime @default(now())
+
+  report StartupHealthReportRecord @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, versionNumber])
+}
+
+// ==========================================
+// OKX.AI ECOSYSTEM INTEGRATION MODELS
+// ==========================================
+
+model OkxAgentIdentityRecord {
+  id           String   @id @default(uuid())
+  agentId      String   @unique
+  address      String
+  status       String   @default("ACTIVE")
+  metadataJson Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model OkxWalletSessionRecord {
+  id            String   @id @default(uuid())
+  walletAddress String   @unique
+  sessionToken  String   @unique
+  status        String   @default("ACTIVE")
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model OkxMarketplaceTaskRecord {
+  id                String   @id @default(uuid())
+  taskId            String   @unique
+  requesterAgentId  String
+  founderProfileId  String   @default("")
+  startupProfileId  String   @default("")
+  serviceType       String
+  status            String   @default("RECEIVED")
+  scopeJson         Json
+  pricingJson       Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model OkxNegotiationRecord {
+  id               String   @id @default(uuid())
+  taskId           String   @unique
+  status           String   @default("OPEN")
+  proposedPrice    String
+  proposedTimeline String
+  historyJson      Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model OkxEscrowRecord {
+  id                String   @id @default(uuid())
+  taskId            String   @unique
+  escrowId          String   @unique
+  amount            String
+  status            String   @default("INITIATED")
+  arbitrationStatus String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model OkxDeliveryRecord {
+  id              String   @id @default(uuid())
+  taskId          String   @unique
+  deliveryId      String   @unique
+  contentJson     Json
+  contentMarkdown String
+  confidenceScore Float
+  createdAt       DateTime @default(now())
+}
+
+model OkxRatingRecord {
+  id             String   @id @default(uuid())
+  taskId         String   @unique
+  ratingScore    Float
+  reviewText     String?
+  ratedByAgentId String
+  /// ASP / provider agent being rated (not the buyer)
+  ratedAgentId   String   @default("metiora-ai-operating-partner")
+  createdAt      DateTime @default(now())
+}
+
+// ==========================================
+// OKX.AI MARKETPLACE REGISTRATION MODELS
+// ==========================================
+
+model OkxAspProfileRecord {
+  id           String   @id @default(uuid())
+  agentName    String   @unique
+  displayName  String
+  description  String
+  category     String
+  logoUrl      String
+  bannerUrl    String
+  websiteUrl   String
+  docsUrl      String
+  version      String
+  metadataJson Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model OkxMarketplaceCatalogRecord {
+  id                String   @id @default(uuid())
+  serviceType       String   @unique
+  name              String
+  description       String
+  capabilitiesJson  Json
+  inputSchemaJson   Json
+  outputSchemaJson  Json
+  pricingJson       Json
+  executionModesJson Json
+  version           String
+  isVerified        Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

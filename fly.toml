@@ -1,0 +1,49 @@
+app = "metiora-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  HOST = "0.0.0.0"
+  LOG_LEVEL = "info"
+  API_BASE_URL = "https://agentmetiora.xyz"
+  OKX_PAYMENT_NETWORK = "eip155:196"
+
+# Keep at least one machine always on — avoids cold-start buyer timeouts
+[[services]]
+  protocol = "tcp"
+  internal_port = 3000
+  processes = ["app"]
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  # Long enough for x402 verify + package generation + settle
+  [services.http_options]
+    idle_timeout = 120
+    response_header_timeout = 120
+
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "10s"
+    grace_period = "30s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512

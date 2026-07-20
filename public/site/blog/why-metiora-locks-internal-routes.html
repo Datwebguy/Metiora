@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Why Metiora locks internal routes · Metiora Blog</title>
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" href="/site/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/site/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/site/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/site/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/site/site.webmanifest" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/site/css/main.css" />
+  </head>
+  <body>
+    <div class="bg-stage" aria-hidden="true"><div class="bg-grid"></div><div class="bg-orb bg-orb--c"></div><div class="bg-noise"></div></div>
+    <div class="shell">
+      <header class="nav">
+        <div class="nav__inner">
+          <a class="brand" href="/"><img src="/site/logo.png" width="36" height="36" alt="" /><span>Metiora</span></a>
+          <nav class="nav__links"><a href="/blog/">Blog</a><a href="/docs/">Docs</a></nav>
+          <div class="nav__actions">
+            <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme"><span class="icon-moon">☾</span><span class="icon-sun">☀</span></button>
+            <a class="btn btn--ghost btn--sm" data-github href="https://github.com/Datwebguy/Metiora">GitHub</a>
+            <button class="nav-toggle" type="button" aria-label="Menu"><span></span></button>
+          </div>
+        </div>
+      </header>
+      <div class="nav-drawer"><a href="/">Home</a><a href="/blog/">Blog</a></div>
+      <main class="container" style="padding-bottom:4rem">
+        <div class="page-hero">
+          <div class="blog-card__meta">20 Jul 2026 · Security</div>
+          <h1>Why Metiora locks internal routes</h1>
+          <p>Two doors, two tickets. Payment for buyers. API key for operators.</p>
+        </div>
+        <article class="content-card prose">
+          <p>
+            Opening every route with no auth is convenient during a weekend hack. On a public domain it is a liability. Anyone can fill your Postgres with junk founders, generate packages for free, or poke simulated escrow helpers that were never meant to be marketplace payments.
+          </p>
+          <h2>Public surface</h2>
+          <p>
+            Health, avatar, marketing pages, services catalog, bootstrap, and paid A2MCP product paths. Buyers never need the Metiora API key. They need a working wallet flow for x402.
+          </p>
+          <h2>Private surface</h2>
+          <p>
+            Operator memory admin, internal package routes, and legacy OKX integration helpers. Those require a long random API key in production. Constant time compare reduces cheap timing tricks on the key check.
+          </p>
+          <h2>Secrets stay off GitHub</h2>
+          <p>
+            The public repo holds code and docs. Real keys live in Fly secrets and local ignored files. If a secret ever lands in git history, rotate it immediately and treat the old value as burned.
+          </p>
+          <p><a href="/blog/" style="color:var(--lime)">← All posts</a></p>
+        </article>
+      </main>
+      <footer class="footer"><div class="container footer__inner"><p>© <span data-year>2026</span> Metiora</p></div></footer>
+    </div>
+    <script src="/site/js/main.js" defer></script>
+  </body>
+</html>

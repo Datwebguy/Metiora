@@ -1,0 +1,18 @@
+// Metiora Database Schema
+// Clean Architecture Foundation — Prepared for Phase 2 Persistence Layer
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// System Health Check Anchor (Foundation Only)
+model SystemHealthCheck {
+  id        String   @id @default(uuid())
+  checkedAt DateTime @default(now())
+  status    String
+}
