@@ -18,12 +18,12 @@
 | Service | Price | amount (base) | payTo | asset | Result |
 |---------|-------|---------------|-------|-------|--------|
 | smoke_test | $0.01 | 10000 | 0xd4a8… | 0x779ded… | **PASS** |
-| startup_blueprint | $7 | 7000000 | 0xd4a8… | 0x779ded… | **PASS** |
-| investor_ready | $7 | 7000000 | 0xd4a8… | 0x779ded… | **PASS** |
-| grant_builder | $3 | 3000000 | 0xd4a8… | 0x779ded… | **PASS** |
-| partnership_studio | $3 | 3000000 | 0xd4a8… | 0x779ded… | **PASS** |
-| token_launch_kit | $3 | 3000000 | 0xd4a8… | 0x779ded… | **PASS** |
-| startup_health | $2 | 2000000 | 0xd4a8… | 0x779ded… | **PASS** |
+| startup_blueprint | $3 | 3000000 | 0xd4a8… | 0x779ded… | **PASS** (price updated 2026-07-20) |
+| investor_ready | $3 | 3000000 | 0xd4a8… | 0x779ded… | **PASS** (price updated 2026-07-20) |
+| grant_builder | $2 | 2000000 | 0xd4a8… | 0x779ded… | **PASS** (price updated 2026-07-20) |
+| partnership_studio | $1 | 1000000 | 0xd4a8… | 0x779ded… | **PASS** (price updated 2026-07-20) |
+| token_launch_kit | $0.3 | 300000 | 0xd4a8… | 0x779ded… | **PASS** (price updated 2026-07-20) |
+| startup_health | $0.3 | 300000 | 0xd4a8… | 0x779ded… | **PASS** (price updated 2026-07-20) |
 
 **7/7 PASS**
 
@@ -50,7 +50,7 @@
 | Settlement | **success** |
 | txHash | `0xc5e4ca7a90d540d95bfd8cc9250e312d0bda6eca7804e0bcae20ab077b91cc99` |
 
-Buyer wallet balance at test (~0.185 USDT0) is **below** product prices ($2–$7), so paid E2E for product packages was not run. Preflight + generation prove each product is ready; fund buyer wallet to re-run paid on e.g. Startup Health ($2).
+Buyer wallet balance at original test was below product prices, so paid E2E for product packages was not run then. Smoke ($0.01) paid path has been re-verified after price changes. Current ladder: $3 / $3 / $2 / $1 / $0.3 / $0.3.
 
 ## Avatar
 

@@ -21,12 +21,12 @@ Live base: `https://metiora-api.fly.dev`
 
 | Operation | Method | Full URL | Price |
 |-----------|--------|----------|-------|
-| startup_blueprint | POST | https://metiora-api.fly.dev/v1/a2mcp/startup-blueprint | $7 |
-| investor_ready | POST | https://metiora-api.fly.dev/v1/a2mcp/investor-ready | $7 |
-| grant_builder | POST | https://metiora-api.fly.dev/v1/a2mcp/grant-builder | $3 |
-| partnership_studio | POST | https://metiora-api.fly.dev/v1/a2mcp/partnership-studio | $3 |
-| token_launch_kit | POST | https://metiora-api.fly.dev/v1/a2mcp/token-launch-kit | $3 |
-| startup_health | POST | https://metiora-api.fly.dev/v1/a2mcp/startup-health | $2 |
+| startup_blueprint | POST | https://agentmetiora.xyz/v1/a2mcp/startup-blueprint | $3 |
+| investor_ready | POST | https://agentmetiora.xyz/v1/a2mcp/investor-ready | $3 |
+| grant_builder | POST | https://agentmetiora.xyz/v1/a2mcp/grant-builder | $2 |
+| partnership_studio | POST | https://agentmetiora.xyz/v1/a2mcp/partnership-studio | $1 |
+| token_launch_kit | POST | https://agentmetiora.xyz/v1/a2mcp/token-launch-kit | $0.3 |
+| startup_health | POST | https://agentmetiora.xyz/v1/a2mcp/startup-health | $0.3 |
 
 **Fee token on registration:** `0x779ded0c9e1022225f8e0630b35a9b54be713736`  
 **Network / chainId:** X Layer **196** (`eip155:196`)  

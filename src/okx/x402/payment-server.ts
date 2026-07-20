@@ -19,12 +19,12 @@ export const XLAYER_NETWORK = 'eip155:196' as const;
 export const A2MCP_SERVICE_PRICES = {
   /** Mainnet payment-path smoke only — $0.01 USDT0 */
   smoke_test: '$0.01',
-  startup_blueprint: '$7',
-  investor_ready: '$7',
-  grant_builder: '$3',
-  partnership_studio: '$3',
-  token_launch_kit: '$3',
-  startup_health: '$2',
+  startup_blueprint: '$3',
+  investor_ready: '$3',
+  grant_builder: '$2',
+  partnership_studio: '$1',
+  token_launch_kit: '$0.3',
+  startup_health: '$0.3',
 } as const;
 
 export type A2mcpServiceKey = keyof typeof A2MCP_SERVICE_PRICES;
@@ -161,6 +161,42 @@ export function createX402Server(env: EnvironmentConfig): X402ServerBundle {
           validOperations: Object.keys(A2MCP_ROUTE_PATHS).filter((k) => k !== 'smoke_test'),
           bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
           docs: 'https://web3.okx.com/onchainos/dev-docs/okxai/howtomcp',
+        },
+      }),
+      /**
+       * After a signed payment is verified but settle fails, SDK defaults to 402 + {}.
+       * That looks identical to "never paid" (ASP #6434 delist pattern). Always return
+       * a structured body so buyers/agents can see settle failure + any txHash.
+       */
+      settlementFailedResponseBody: (
+        _ctx: unknown,
+        failure: {
+          errorReason?: string;
+          errorMessage?: string;
+          transaction?: string;
+          payer?: string;
+          network?: string;
+        }
+      ) => ({
+        contentType: 'application/json',
+        body: {
+          success: false,
+          errorCode: 'SETTLE_FAILED',
+          message:
+            failure.errorMessage ||
+            failure.errorReason ||
+            'Payment verified but on-chain settlement failed',
+          service,
+          endpoint: publicUrl,
+          priceUsd: price,
+          network: failure.network || network,
+          payTo,
+          feeToken: XLAYER_USDT0_ASSET,
+          paymentHeaderPresent: true,
+          ...(failure.transaction ? { txHash: failure.transaction } : {}),
+          ...(failure.payer ? { payer: failure.payer } : {}),
+          ...(failure.errorReason ? { facilitatorReason: failure.errorReason } : {}),
+          note: 'Do not treat this as an unpaid 402 challenge. Settlement did not complete after verify.',
         },
       }),
     };

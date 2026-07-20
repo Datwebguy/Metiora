@@ -28,7 +28,7 @@ This document details Metiora's official publication and service registration as
        ┌───────────────┬────────────┼────────────┬───────────────┐
        ▼               ▼            ▼            ▼               ▼
  [Blueprint]       [Investor]    [Grant]   [Partnership]  [Token Launch]  [Health]
- ($50/Fixed)       ($75/Fixed) ($60/Fixed)  ($60/Fixed)    ($100/Fixed)  ($40/Fixed)
+ ($3/Fixed)        ($3/Fixed)  ($2/Fixed)  ($1/Fixed)     ($0.3/Fixed)   ($0.3/Fixed)
        │               │            │            │               │           │
        └───────────────┴────────────┼────────────┴───────────────┴───────────┘
                                     ▼
@@ -52,22 +52,26 @@ Metiora's registered ASP profile:
 * **Category**: `Professional Asset Creation & Business Intelligence`
 * **Supported Languages**: `['en', 'zh', 'es']`
 * **Contact Email**: `asp@metiora.ai`
-* **Website**: `https://metiora.ai`
-* **Documentation**: `https://docs.metiora.ai`
+* **Website**: `https://agentmetiora.xyz`
+* **Documentation**: `https://agentmetiora.xyz/docs/`
+* **GitHub**: `https://github.com/Datwebguy/Metiora`
+* **Marketplace agent**: `#6860` Metiora
 * **Version**: `1.0.0`
 
 ---
 
 ## 3. Registered Service Catalog
 
-| Service | Est. Time | Base Price | Pricing Mode | Execution Modes |
+| Service | Est. Time | Base Price (USDT) | Pricing Mode | Public endpoint |
 | :--- | :--- | :--- | :--- | :--- |
-| **Startup Blueprint** | 5 mins | $50 USD | FIXED | `AUTO_MATCH`, `DIRECT_ASSIGNMENT`, `PUBLIC_LISTING` |
-| **Investor Ready Package** | 5 mins | $75 USD | FIXED | `AUTO_MATCH`, `DIRECT_ASSIGNMENT`, `PUBLIC_LISTING` |
-| **Grant Builder Package** | 5 mins | $60 USD | FIXED | `AUTO_MATCH`, `DIRECT_ASSIGNMENT`, `PUBLIC_LISTING` |
-| **Partnership Studio** | 5 mins | $60 USD | FIXED | `AUTO_MATCH`, `DIRECT_ASSIGNMENT`, `PUBLIC_LISTING` |
-| **Token Launch Kit** | 5 mins | $100 USD | FIXED | `AUTO_MATCH`, `DIRECT_ASSIGNMENT`, `PUBLIC_LISTING` |
-| **Startup Health Review** | 3 mins | $40 USD | FIXED | `AUTO_MATCH`, `DIRECT_ASSIGNMENT`, `PUBLIC_LISTING` |
+| **Startup Blueprint** | 5 mins | **3** | FIXED / x402 exact | `POST https://agentmetiora.xyz/v1/a2mcp/startup-blueprint` |
+| **Investor Ready Package** | 5 mins | **3** | FIXED / x402 exact | `POST https://agentmetiora.xyz/v1/a2mcp/investor-ready` |
+| **Grant Builder Package** | 5 mins | **2** | FIXED / x402 exact | `POST https://agentmetiora.xyz/v1/a2mcp/grant-builder` |
+| **Partnership Studio** | 5 mins | **1** | FIXED / x402 exact | `POST https://agentmetiora.xyz/v1/a2mcp/partnership-studio` |
+| **Token Launch Kit** | 5 mins | **0.3** | FIXED / x402 exact | `POST https://agentmetiora.xyz/v1/a2mcp/token-launch-kit` |
+| **Startup Health Review** | 3 mins | **0.3** | FIXED / x402 exact | `POST https://agentmetiora.xyz/v1/a2mcp/startup-health` |
+
+Prices must match the live catalog at `GET https://agentmetiora.xyz/v1/a2mcp/services` and the OKX marketplace service fees for agent **#6860**.
 
 ---
 

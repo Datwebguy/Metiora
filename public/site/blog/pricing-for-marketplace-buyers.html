@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Metiora pricing for marketplace buyers · Blog</title>
+    <meta
+      name="description"
+      content="Current Metiora A2MCP package prices on OKX.AI: blueprint, investor, grant, partnership, token, and health in USDT on X Layer."
+    />
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" href="/site/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/site/favicon-32.png" type="image/png" sizes="32x32" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/site/css/main.css?v=8" />
+  </head>
+  <body>
+    <div class="bg-stage" aria-hidden="true">
+      <div class="bg-grid"></div>
+      <div class="bg-orb bg-orb--a"></div>
+      <div class="bg-noise"></div>
+    </div>
+    <div class="shell">
+      <header class="nav">
+        <div class="nav__inner">
+          <a class="brand" href="/"><img src="/site/logo.png" width="36" height="36" alt="" /><span>Metiora</span></a>
+          <nav class="nav__links"><a href="/blog/">Blog</a><a href="/docs/">Docs</a></nav>
+          <div class="nav__actions">
+            <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+              <span class="icon-moon">☾</span><span class="icon-sun">☀</span>
+            </button>
+            <a class="btn btn--ghost btn--sm" data-github href="https://github.com/Datwebguy/Metiora">GitHub</a>
+            <button class="nav-toggle" type="button" aria-label="Menu"><span></span></button>
+          </div>
+        </div>
+      </header>
+      <div class="nav-drawer"><a href="/">Home</a><a href="/blog/">Blog</a><a href="/docs/">Docs</a></div>
+
+      <main class="container" style="padding-bottom: 4rem; max-width: 760px">
+        <article>
+          <header class="page-hero">
+            <div class="section-kicker">Pricing · Product</div>
+            <h1>Pricing for marketplace buyers</h1>
+            <div class="blog-byline">
+              <span><strong>Datwebguy</strong></span>
+              <span>20 Jul 2026</span>
+              <span>4 min read</span>
+            </div>
+            <p>
+              Metiora ships six paid packages on the OKX.AI marketplace. Fees are fixed USDT amounts on X Layer via
+              x402. Listing prices, catalog prices, and the HTTP 402 challenge must stay identical — this post is the
+              public reference for the current set.
+            </p>
+          </header>
+
+          <div class="prose">
+            <h2>Current fees</h2>
+            <p>All amounts are USDT0 on X Layer mainnet (<code>eip155:196</code>).</p>
+            <ul>
+              <li><strong>Startup Blueprint</strong> — 3 USDT · <code>POST /v1/a2mcp/startup-blueprint</code></li>
+              <li><strong>Investor Ready Package</strong> — 3 USDT · <code>POST /v1/a2mcp/investor-ready</code></li>
+              <li><strong>Grant Builder Package</strong> — 2 USDT · <code>POST /v1/a2mcp/grant-builder</code></li>
+              <li><strong>Partnership Studio</strong> — 1 USDT · <code>POST /v1/a2mcp/partnership-studio</code></li>
+              <li><strong>Token Launch Kit</strong> — 0.3 USDT · <code>POST /v1/a2mcp/token-launch-kit</code></li>
+              <li><strong>Startup Health Review</strong> — 0.3 USDT · <code>POST /v1/a2mcp/startup-health</code></li>
+            </ul>
+            <p>
+              Source of truth for machines: the live catalog at
+              <a href="/v1/a2mcp/services" style="color: var(--lime)">/v1/a2mcp/services</a>. If a blog page and the
+              catalog ever disagree, trust the catalog.
+            </p>
+
+            <h2>Why the ladder is shaped this way</h2>
+            <p>
+              Blueprint and investor packages do the heaviest narrative work, so they sit at the top of the ladder.
+              Grant and partnership packages are lighter, focused deliverables. Token kit and health review are
+              entry-priced so a buyer can validate the full pay path — bootstrap, 402, settle, dual JSON and Markdown —
+              without a large first charge.
+            </p>
+
+            <h2>What you pay for</h2>
+            <p>
+              Payment is the gate. Buyers do not need a Metiora operator API key. After a free
+              <code>POST /v1/a2mcp/bootstrap</code>, you hold <code>founderProfileId</code> and
+              <code>startupProfileId</code>. Paid routes require those IDs in the JSON body and a valid x402 payment
+              header. Without payment you always get HTTP 402 with the official fee token and payTo address.
+            </p>
+
+            <h2>How to stay consistent as a seller</h2>
+            <p>
+              When we change a fee, three places must move together: the server’s x402 price table, the public site and
+              docs, and the OKX marketplace service fee. Mismatched listing vs challenge is a common reason buyers see
+              confusing amounts and a common reason listings fail review.
+            </p>
+
+            <p>
+              Full buyer steps live in the
+              <a href="/docs/" style="color: var(--lime)">docs</a>. Source is on
+              <a href="https://github.com/Datwebguy/Metiora" style="color: var(--lime)">GitHub</a>.
+            </p>
+          </div>
+        </article>
+      </main>
+
+      <footer class="footer">
+        <div class="container footer__inner">
+          <p>© <span data-year>2026</span> Metiora · Blog</p>
+          <div class="footer__links">
+            <a href="/">Home</a>
+            <a href="/blog/">Blog</a>
+            <a href="/docs/">Docs</a>
+            <a data-github href="https://github.com/Datwebguy/Metiora">GitHub</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <script src="/site/js/main.js?v=8" defer></script>
+  </body>
+</html>

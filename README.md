@@ -24,32 +24,32 @@ This is a production service, not a chat demo.
 
 All prices are in USDT on X Layer. After payment, send `founderProfileId` and `startupProfileId` (from bootstrap). Optional: `blueprintId`.
 
-### Startup Blueprint · $7
+### Startup Blueprint · $3
 **Endpoint:** `POST /v1/a2mcp/startup-blueprint`
 
 Builds a strategic startup blueprint from company memory. Dual JSON and Markdown. For founders who need a clear plan they can share and iterate on.
 
-### Investor Ready Package · $7
+### Investor Ready Package · $3
 **Endpoint:** `POST /v1/a2mcp/investor-ready`
 
 Investor facing package with readiness scoring and memo style narrative. For founders preparing conversations with capital.
 
-### Grant Builder Package · $3
+### Grant Builder Package · $2
 **Endpoint:** `POST /v1/a2mcp/grant-builder`
 
 Grant oriented package with impact narrative and application ready structure. For teams applying to programs and funds.
 
-### Partnership Studio · $3
+### Partnership Studio · $1
 **Endpoint:** `POST /v1/a2mcp/partnership-studio`
 
 Partnership outreach package: fit, mutual value, and structure for alliance conversations. For founders seeking collaborators.
 
-### Token Launch Kit · $3
+### Token Launch Kit · $0.3
 **Endpoint:** `POST /v1/a2mcp/token-launch-kit`
 
 Token strategy outline covering utility, distribution ideas, and planning notes. For teams exploring token design.
 
-### Startup Health Review · $2
+### Startup Health Review · $0.3
 **Endpoint:** `POST /v1/a2mcp/startup-health`
 
 Multi dimension health assessment with scores and priorities. For founders tracking execution quality over time.

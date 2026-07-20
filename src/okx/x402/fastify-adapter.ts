@@ -3,13 +3,35 @@ import type { HTTPAdapter } from '@okxweb3/x402-core/server';
 
 /**
  * Fastify implementation of OKX x402 HTTPAdapter.
+ *
+ * Critical: OKX SDK extractPayment() only reads PAYMENT-SIGNATURE.
+ * Many buyers/agents still send legacy X-PAYMENT. We alias so a valid
+ * signed payload is never treated as "no payment" (re-issue 402 forever).
  */
 export class FastifyX402Adapter implements HTTPAdapter {
   constructor(private readonly req: FastifyRequest) {}
 
   getHeader(name: string): string | undefined {
-    const value = this.req.headers[name.toLowerCase()];
-    if (Array.isArray(value)) return value[0];
+    const key = name.toLowerCase();
+    const raw = this.req.headers[key];
+    let value: string | undefined;
+    if (Array.isArray(raw)) {
+      value = raw[0];
+    } else if (typeof raw === 'string') {
+      value = raw;
+    }
+
+    // Alias legacy X-PAYMENT → PAYMENT-SIGNATURE for SDK extractPayment
+    if (
+      (key === 'payment-signature' || key === 'x-payment') &&
+      (value == null || value.length === 0)
+    ) {
+      const altKey = key === 'payment-signature' ? 'x-payment' : 'payment-signature';
+      const alt = this.req.headers[altKey];
+      if (Array.isArray(alt)) return alt[0];
+      if (typeof alt === 'string' && alt.length > 0) return alt;
+    }
+
     return value;
   }
 

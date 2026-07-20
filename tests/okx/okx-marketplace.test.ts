@@ -69,7 +69,7 @@ describe('OKX.AI Marketplace Registration & Publication Tests', () => {
     expect(grantItems.length).toBeGreaterThan(0);
     expect(grantItems[0].serviceType).toBe('grant_builder');
 
-    // Current list: blueprint/investor $7, grant/partnership/token $3, health $2 — all ≤ $7
+    // Current list: blueprint/investor $3, grant $2, partnership $1, token/health $0.3
     const affordableItems = await catalogPublisher.queryCatalog({ maxPriceUsd: 7 });
     expect(affordableItems.length).toBe(6);
   });
