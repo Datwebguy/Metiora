@@ -32,6 +32,7 @@ import { registerOkxMarketplaceRoutes } from './routes/okx-marketplace-routes.js
 import { registerA2mcpRoutes } from './routes/a2mcp-routes.js';
 import { A2aServiceAdapter } from '../okx/adapter/a2a-service-adapter.js';
 import { createX402Server } from '../okx/x402/payment-server.js';
+import { resolvePackageAi } from '../ai/resolve-package-ai.js';
 import {
   EnvironmentConfig,
   loadEnvironment,
@@ -402,6 +403,23 @@ export async function buildApiServer(
     await registerStartupHealthRoutes(fastify, healthRepo, userMemoryRepo, startupMemoryRepo);
   }
 
+  const packageAi = resolvePackageAi(env);
+  if (packageAi.enabled) {
+    fastify.log.info(
+      {
+        providerId: packageAi.provider?.providerId,
+        model: packageAi.model,
+        timeoutMs: packageAi.timeoutMs,
+      },
+      'A2MCP package LLM enrichment enabled'
+    );
+  } else {
+    fastify.log.warn(
+      { reason: packageAi.reasonDisabled },
+      'A2MCP package LLM enrichment disabled — using structured templates only'
+    );
+  }
+
   if (okxRepo && startupMemoryRepo) {
     const adapter = new A2aServiceAdapter(
       userMemoryRepo,
@@ -411,7 +429,9 @@ export async function buildApiServer(
       grantRepo,
       partnershipRepo,
       tokenRepo,
-      healthRepo
+      healthRepo,
+      packageAi,
+      fastify.log
     );
     await registerOkxIntegrationRoutes(
       fastify,
@@ -439,6 +459,7 @@ export async function buildApiServer(
       tokenRepo,
       healthRepo,
       x402,
+      packageAi,
     });
   }
 

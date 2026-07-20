@@ -31,6 +31,9 @@ import {
   type A2mcpServiceKey,
 } from '../../okx/x402/payment-server.js';
 import { runPaidA2mcpHandler } from '../../okx/x402/fastify-gate.js';
+import type { PackageAiRuntime } from '../../ai/resolve-package-ai.js';
+import { resolvePackageAi } from '../../ai/resolve-package-ai.js';
+import { loadEnvironment } from '../../shared/config/environment.js';
 
 /**
  * Generation budget for paid A2MCP packages.
@@ -87,6 +90,8 @@ export interface A2mcpRouteDeps {
   tokenRepo?: ITokenLaunchKitRepository;
   healthRepo?: IStartupHealthRepository;
   x402: X402ServerBundle;
+  /** Optional pre-resolved AI runtime (from server). If omitted, resolved from env. */
+  packageAi?: PackageAiRuntime;
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -167,6 +172,7 @@ export async function registerA2mcpRoutes(
   fastify: FastifyInstance,
   deps: A2mcpRouteDeps
 ): Promise<void> {
+  const packageAi = deps.packageAi ?? resolvePackageAi(loadEnvironment());
   const adapter = new A2aServiceAdapter(
     deps.userRepo,
     deps.startupRepo,
@@ -175,7 +181,9 @@ export async function registerA2mcpRoutes(
     deps.grantRepo,
     deps.partnershipRepo,
     deps.tokenRepo,
-    deps.healthRepo
+    deps.healthRepo,
+    packageAi,
+    fastify.log
   );
 
   const createFounder = new CreateFounderProfile(deps.userRepo);
@@ -186,6 +194,7 @@ export async function registerA2mcpRoutes(
   // Public discovery for listing self-check + buyers (no Metiora API key)
   // smoke_test is intentionally omitted from marketplace product list
   fastify.get('/v1/a2mcp/services', async (_req: FastifyRequest, reply: FastifyReply) => {
+    const ai = adapter.getAiStatus();
     return reply.status(200).send({
       success: true,
       x402Enabled: deps.x402.enabled,
@@ -194,12 +203,18 @@ export async function registerA2mcpRoutes(
       expectedNetwork: XLAYER_NETWORK,
       payTo: deps.x402.enabled ? deps.x402.payTo : undefined,
       reasonDisabled: deps.x402.reasonDisabled,
+      packageLlm: {
+        enabled: ai.llmEnabled,
+        providerId: ai.providerId,
+        model: ai.model,
+        reasonDisabled: ai.reasonDisabled,
+      },
       requiredBodyFields: [...A2MCP_REQUIRED_BODY_FIELDS],
       optionalBodyFields: [...A2MCP_OPTIONAL_BODY_FIELDS],
       bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
       validOperations: listableOperations,
       services: listableOperations.map((service) => serviceCatalogEntry(service)),
-      note: 'Create profiles with POST /v1/a2mcp/bootstrap before paid service calls.',
+      note: 'Create profiles with POST /v1/a2mcp/bootstrap before paid service calls. Packages use structured templates; when packageLlm.enabled is true, narratives are enriched with a live model grounded in memory.',
     });
   });
 
@@ -400,7 +415,11 @@ export async function registerA2mcpRoutes(
           success: true,
           service,
           operation: service,
-          data: result,
+          data: {
+            contentJson: result.contentJson,
+            contentMarkdown: result.contentMarkdown,
+          },
+          generation: result.generation,
           paymentNetwork: deps.x402.network,
           feeToken: XLAYER_USDT0_ASSET,
         };

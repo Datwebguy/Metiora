@@ -57,6 +57,24 @@ const EnvironmentSchema = z.object({
    * Testnet: eip155:1952
    */
   OKX_PAYMENT_NETWORK: z.string().default('eip155:196'),
+
+  // --- Paid package LLM enrichment (optional; falls back to structured templates) ---
+  /**
+   * When true (default) and a provider key is present, A2MCP packages are rewritten
+   * by an LLM using founder/startup memory + the deterministic template scaffold.
+   */
+  AI_PACKAGE_LLM_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  /** openai | openrouter | auto (prefer openrouter, then openai) */
+  AI_PROVIDER: z.enum(['auto', 'openai', 'openrouter']).default('auto'),
+  OPENAI_API_KEY: z.string().optional(),
+  OPENROUTER_API_KEY: z.string().optional(),
+  /** Override model id, e.g. gpt-4o-mini or openrouter/auto */
+  AI_MODEL: z.string().optional(),
+  /** Soft timeout for package LLM call (ms). Keep under A2MCP service budget. */
+  AI_PACKAGE_TIMEOUT_MS: z.coerce.number().default(28_000),
 });
 
 export type EnvironmentConfig = z.infer<typeof EnvironmentSchema>;
