@@ -181,7 +181,9 @@
               <p>
                 The live catalog at <a href="/v1/a2mcp/services" style="color: var(--lime)">/v1/a2mcp/services</a>
                 always reflects production prices and endpoints. Marketplace registration should copy those values
-                exactly.
+                exactly. When <code>packageLlm.enabled</code> is true, paid packages keep dual JSON and Markdown but
+                enrich narratives with a live model grounded only in founder and startup memory (template fallback if
+                the model is unavailable).
               </p>
             </article>
 
