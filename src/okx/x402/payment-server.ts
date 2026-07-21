@@ -39,13 +39,32 @@ export const A2MCP_ROUTE_PATHS: Record<A2mcpServiceKey, string> = {
   startup_health: '/v1/a2mcp/startup-health',
 };
 
-/** Required JSON body fields after payment (publish in listing metadata). */
+/**
+ * Profile IDs (from a prior bootstrap) OR inline founder+startup objects.
+ * Marketplace buyers may send inline data; server auto-bootstraps on paid call.
+ */
 export const A2MCP_REQUIRED_BODY_FIELDS = [
-  'founderProfileId',
-  'startupProfileId',
+  'founderProfileId|founder',
+  'startupProfileId|startup',
 ] as const;
 
 export const A2MCP_OPTIONAL_BODY_FIELDS = ['blueprintId'] as const;
+
+/** Human-readable body contract for 402 + listing docs */
+export const A2MCP_BODY_MODES = {
+  profileIds: {
+    mode: 'profileIds' as const,
+    fields: ['founderProfileId', 'startupProfileId'],
+    note: 'UUIDs from a previous call (or free POST /v1/a2mcp/bootstrap).',
+  },
+  inline: {
+    mode: 'inline' as const,
+    fields: ['founder', 'startup'],
+    requiredFounder: ['email', 'fullName'],
+    requiredStartup: ['name', 'industry'],
+    note: 'First-time / marketplace buyers: send founder+startup JSON on the paid call; Metiora auto-creates profiles before generating the package.',
+  },
+} as const;
 
 /** Full public HTTPS base used in resource.url — must match custom domain / Fly. */
 export const A2MCP_PUBLIC_BASE_URL =
@@ -133,21 +152,24 @@ export function createX402Server(env: EnvironmentConfig): X402ServerBundle {
             name: 'USD₮0',
             version: '1',
             expectedAsset: XLAYER_USDT0_ASSET,
-            requiredBodyFields: isSmoke ? [] : [...A2MCP_REQUIRED_BODY_FIELDS],
+            // Marketplace buyers: either profile UUIDs OR inline founder+startup
+            requiredBodyFields: isSmoke ? [] : ['founder+startup OR founderProfileId+startupProfileId'],
+            bodyModes: isSmoke ? undefined : A2MCP_BODY_MODES,
           },
         },
       ],
       resource: publicUrl,
       description: isSmoke
         ? 'Metiora x402 mainnet smoke test ($0.01) — payment path verification only'
-        : `Metiora A2MCP — ${service.replace(/_/g, ' ')}. Required JSON body: ${A2MCP_REQUIRED_BODY_FIELDS.join(', ')}`,
+        : `Metiora A2MCP — ${service.replace(/_/g, ' ')}. JSON body: founder+startup (auto-bootstrap) OR founderProfileId+startupProfileId.`,
       mimeType: 'application/json',
       unpaidResponseBody: () => ({
         contentType: 'application/json',
         body: {
           success: false,
           errorCode: 'PAYMENT_REQUIRED',
-          message: 'x402 payment required for this Metiora A2MCP service',
+          message:
+            'x402 payment required. Include JSON body with either (1) founder+startup objects for first-time buyers, or (2) founderProfileId+startupProfileId UUIDs.',
           service,
           endpoint: publicUrl,
           priceUsd: price,
@@ -155,11 +177,33 @@ export function createX402Server(env: EnvironmentConfig): X402ServerBundle {
           payTo,
           /** Official X Layer USDT0 — must match marketplace fee token registration */
           feeToken: XLAYER_USDT0_ASSET,
-          requiredBodyFields: isSmoke ? [] : [...A2MCP_REQUIRED_BODY_FIELDS],
+          bodyModes: isSmoke ? undefined : A2MCP_BODY_MODES,
+          exampleInlineBody: isSmoke
+            ? undefined
+            : {
+                founder: {
+                  email: 'founder@example.com',
+                  fullName: 'Ada Founder',
+                },
+                startup: {
+                  name: 'Example Co',
+                  industry: 'Software',
+                  oneSentenceDescription: 'What you build in one sentence',
+                  productDescription: 'Optional product detail',
+                  problemStatement: 'Optional problem',
+                },
+              },
+          exampleProfileIdBody: isSmoke
+            ? undefined
+            : {
+                founderProfileId: '<uuid>',
+                startupProfileId: '<uuid>',
+              },
           optionalBodyFields: isSmoke ? [] : [...A2MCP_OPTIONAL_BODY_FIELDS],
           // Marketplace listables only (smoke is internal payment-path probe)
           validOperations: Object.keys(A2MCP_ROUTE_PATHS).filter((k) => k !== 'smoke_test'),
           bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
+          note: 'Marketplace buyers can skip the free bootstrap endpoint: send founder+startup on this paid call and Metiora creates profiles automatically.',
           docs: 'https://web3.okx.com/onchainos/dev-docs/okxai/howtomcp',
         },
       }),

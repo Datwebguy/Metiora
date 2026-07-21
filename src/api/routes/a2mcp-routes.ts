@@ -24,6 +24,7 @@ import {
   A2MCP_SERVICE_PRICES,
   A2MCP_REQUIRED_BODY_FIELDS,
   A2MCP_OPTIONAL_BODY_FIELDS,
+  A2MCP_BODY_MODES,
   A2MCP_PUBLIC_BASE_URL,
   XLAYER_USDT0_ASSET,
   XLAYER_NETWORK,
@@ -47,38 +48,70 @@ const LISTABLE_SERVICES = (
   Object.keys(A2MCP_ROUTE_PATHS) as A2mcpServiceKey[]
 ).filter((s) => s !== 'smoke_test');
 
-const PaidBodySchema = z.object({
-  founderProfileId: z.string().uuid(),
-  startupProfileId: z.string().uuid(),
-  blueprintId: z.string().uuid().optional(),
+const FounderInlineSchema = z.object({
+  email: z.string().email().max(320),
+  fullName: z.string().min(1).max(200),
+  preferredName: z.string().max(120).optional(),
+  title: z.string().max(200).optional(),
+  bio: z.string().max(4000).optional(),
+  country: z.string().max(120).optional(),
+  timezone: z.string().max(80).optional(),
+  skills: z.array(z.string().max(80)).max(40).optional(),
+  industries: z.array(z.string().max(80)).max(20).optional(),
+  experienceYears: z.number().min(0).max(80).optional(),
+});
+
+const StartupInlineSchema = z.object({
+  name: z.string().min(1).max(200),
+  tagline: z.string().max(300).optional(),
+  oneSentenceDescription: z.string().max(500).optional(),
+  industry: z.string().min(1).max(120),
+  stage: z.string().max(80).optional(),
+  websiteUrl: z.string().max(500).optional(),
+  mission: z.string().max(2000).optional(),
+  problemStatement: z.string().max(4000).optional(),
+  productDescription: z.string().max(4000).optional(),
+  businessModel: z.string().max(1000).optional(),
 });
 
 const BootstrapSchema = z.object({
-  founder: z.object({
-    email: z.string().email().max(320),
-    fullName: z.string().min(1).max(200),
-    preferredName: z.string().max(120).optional(),
-    title: z.string().max(200).optional(),
-    bio: z.string().max(4000).optional(),
-    country: z.string().max(120).optional(),
-    timezone: z.string().max(80).optional(),
-    skills: z.array(z.string().max(80)).max(40).optional(),
-    industries: z.array(z.string().max(80)).max(20).optional(),
-    experienceYears: z.number().min(0).max(80).optional(),
-  }),
-  startup: z.object({
-    name: z.string().min(1).max(200),
-    tagline: z.string().max(300).optional(),
-    oneSentenceDescription: z.string().max(500).optional(),
-    industry: z.string().min(1).max(120),
-    stage: z.string().max(80).optional(),
-    websiteUrl: z.string().max(500).optional(),
-    mission: z.string().max(2000).optional(),
-    problemStatement: z.string().max(4000).optional(),
-    productDescription: z.string().max(4000).optional(),
-    businessModel: z.string().max(1000).optional(),
-  }),
+  founder: FounderInlineSchema,
+  startup: StartupInlineSchema,
 });
+
+/**
+ * Marketplace-friendly paid body:
+ * - founderProfileId + startupProfileId (returning buyers), OR
+ * - founder + startup objects (first-time / OKX task buyers; auto-bootstrap)
+ */
+const PaidBodySchema = z
+  .object({
+    founderProfileId: z.string().uuid().optional(),
+    startupProfileId: z.string().uuid().optional(),
+    founder: FounderInlineSchema.optional(),
+    startup: StartupInlineSchema.optional(),
+    blueprintId: z.string().uuid().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasIds = Boolean(data.founderProfileId && data.startupProfileId);
+    const hasInline = Boolean(data.founder && data.startup);
+    if (!hasIds && !hasInline) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Provide either founderProfileId+startupProfileId, or founder+startup objects (auto-bootstrap on paid call).',
+      });
+    }
+  });
+
+type PaidBodyInput = z.infer<typeof PaidBodySchema>;
+type ResolvedPaidProfiles = {
+  founderProfileId: string;
+  startupProfileId: string;
+  blueprintId?: string;
+  bootstrapped: boolean;
+  founderReused?: boolean;
+};
 
 export interface A2mcpRouteDeps {
   userRepo: IUserMemoryRepository;
@@ -124,21 +157,111 @@ function extractPaymentHeader(request: FastifyRequest): string | undefined {
 
 async function assertProfilesReadyForPay(
   deps: A2mcpRouteDeps,
-  body: z.infer<typeof PaidBodySchema>
+  founderProfileId: string,
+  startupProfileId: string
 ): Promise<void> {
-  const founder = await deps.userRepo.findById(body.founderProfileId);
+  const founder = await deps.userRepo.findById(founderProfileId);
   if (!founder) {
     throw new NotFoundError(
-      `Founder profile not found for ID '${body.founderProfileId}'. Create profiles via POST /v1/a2mcp/bootstrap first.`
+      `Founder profile not found for ID '${founderProfileId}'. Send founder+startup inline on this paid call, or create profiles via POST /v1/a2mcp/bootstrap.`
     );
   }
-  const startup = await deps.startupRepo.findById(body.startupProfileId);
+  const startup = await deps.startupRepo.findById(startupProfileId);
   if (!startup) {
     throw new NotFoundError(
-      `Startup profile not found for ID '${body.startupProfileId}'. Create profiles via POST /v1/a2mcp/bootstrap first.`
+      `Startup profile not found for ID '${startupProfileId}'. Send founder+startup inline on this paid call, or create profiles via POST /v1/a2mcp/bootstrap.`
     );
   }
-  assertStartupOwnedByFounder(startup, body.founderProfileId);
+  assertStartupOwnedByFounder(startup, founderProfileId);
+}
+
+/**
+ * Resolve profile IDs for a paid call: reuse UUIDs or auto-bootstrap from inline objects.
+ * Fixes marketplace buyer flow where free /bootstrap is not in the x402 task path.
+ */
+async function resolvePaidProfiles(
+  deps: A2mcpRouteDeps,
+  body: PaidBodyInput,
+  createFounder: CreateFounderProfile,
+  createStartup: CreateStartup
+): Promise<ResolvedPaidProfiles> {
+  if (body.founderProfileId && body.startupProfileId) {
+    await assertProfilesReadyForPay(deps, body.founderProfileId, body.startupProfileId);
+    return {
+      founderProfileId: body.founderProfileId,
+      startupProfileId: body.startupProfileId,
+      blueprintId: body.blueprintId,
+      bootstrapped: false,
+    };
+  }
+
+  if (!body.founder || !body.startup) {
+    throw new ApplicationError(
+      'Missing profile context. Send founder+startup objects (recommended for marketplace) or founderProfileId+startupProfileId.',
+      { bodyModes: A2MCP_BODY_MODES }
+    );
+  }
+
+  const founderDto = body.founder;
+  const startupDto = body.startup;
+
+  const existing = await deps.userRepo.findByEmail(founderDto.email);
+  let founderProfileId: string;
+  let founderReused = false;
+
+  if (existing) {
+    founderProfileId = existing.id;
+    founderReused = true;
+  } else {
+    const founder = await withTimeout(
+      createFounder.execute(founderDto),
+      15_000,
+      'paid_auto_bootstrap_founder'
+    );
+    founderProfileId = founder.id;
+  }
+
+  const startup = await withTimeout(
+    createStartup.execute({
+      founderProfileId,
+      ...startupDto,
+    }),
+    15_000,
+    'paid_auto_bootstrap_startup'
+  );
+
+  return {
+    founderProfileId,
+    startupProfileId: startup.id,
+    blueprintId: body.blueprintId,
+    bootstrapped: true,
+    founderReused,
+  };
+}
+
+function paidBodyValidationErrorPayload(details?: unknown) {
+  return {
+    success: false,
+    errorCode: 'VALIDATION_ERROR',
+    message:
+      'Invalid body. Marketplace buyers: send founder+startup objects on this paid call (auto-bootstrap). Returning buyers: send founderProfileId+startupProfileId UUIDs.',
+    bodyModes: A2MCP_BODY_MODES,
+    exampleInlineBody: {
+      founder: { email: 'founder@example.com', fullName: 'Ada Founder' },
+      startup: {
+        name: 'Example Co',
+        industry: 'Software',
+        oneSentenceDescription: 'What you build',
+      },
+    },
+    exampleProfileIdBody: {
+      founderProfileId: '<uuid>',
+      startupProfileId: '<uuid>',
+    },
+    optionalBodyFields: [...A2MCP_OPTIONAL_BODY_FIELDS],
+    bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
+    details,
+  };
 }
 
 function serviceCatalogEntry(service: A2mcpServiceKey) {
@@ -155,9 +278,13 @@ function serviceCatalogEntry(service: A2mcpServiceKey) {
     network: XLAYER_NETWORK,
     listable: !isSmoke,
     internalOnly: isSmoke,
+    bodyModes: isSmoke ? undefined : A2MCP_BODY_MODES,
     requiredBodyFields: isSmoke ? [] : [...A2MCP_REQUIRED_BODY_FIELDS],
     optionalBodyFields: isSmoke ? [] : [...A2MCP_OPTIONAL_BODY_FIELDS],
     payment: 'x402 exact on X Layer (eip155:196) USDT0 0x779ded…',
+    note: isSmoke
+      ? undefined
+      : 'First-time marketplace buyers: POST founder+startup on this endpoint with payment; profiles are created automatically.',
   };
 }
 
@@ -209,12 +336,13 @@ export async function registerA2mcpRoutes(
         model: ai.model,
         reasonDisabled: ai.reasonDisabled,
       },
+      bodyModes: A2MCP_BODY_MODES,
       requiredBodyFields: [...A2MCP_REQUIRED_BODY_FIELDS],
       optionalBodyFields: [...A2MCP_OPTIONAL_BODY_FIELDS],
       bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
       validOperations: listableOperations,
       services: listableOperations.map((service) => serviceCatalogEntry(service)),
-      note: 'Create profiles with POST /v1/a2mcp/bootstrap before paid service calls. Packages use structured templates; when packageLlm.enabled is true, narratives are enriched with a live model grounded in memory.',
+      note: 'Marketplace buyers may send founder+startup on the paid product call (auto-bootstrap). Or use free POST /v1/a2mcp/bootstrap for UUIDs. When packageLlm.enabled is true, narratives are enriched with a live model grounded in memory.',
     });
   });
 
@@ -344,68 +472,75 @@ export async function registerA2mcpRoutes(
       // payment header is present, so buyers never settle against a malformed request.
       const paymentHeader = extractPaymentHeader(request);
 
-      let parsedBody: z.infer<typeof PaidBodySchema> | undefined;
+      // Validate body shape before pay when a payment header is present.
+      // Auto-bootstrap runs ONLY after payment is verified (inside handler), so failed
+      // signatures never create orphan profiles.
+      let parsedPaidInput: PaidBodyInput | undefined;
       if (paymentHeader) {
         const parsed = PaidBodySchema.safeParse(request.body);
         if (!parsed.success) {
-          return reply.status(400).send({
-            success: false,
-            errorCode: 'VALIDATION_ERROR',
-            message: `Invalid body. Required fields: ${A2MCP_REQUIRED_BODY_FIELDS.join(', ')}. Optional: ${A2MCP_OPTIONAL_BODY_FIELDS.join(', ')}.`,
-            details: parsed.error.flatten(),
-            requiredBodyFields: [...A2MCP_REQUIRED_BODY_FIELDS],
-            optionalBodyFields: [...A2MCP_OPTIONAL_BODY_FIELDS],
-            bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
-          });
+          return reply.status(400).send(paidBodyValidationErrorPayload(parsed.error.flatten()));
         }
-        parsedBody = parsed.data;
+        parsedPaidInput = parsed.data;
 
-        // Fail closed before facilitator verify/settle if profiles missing or ownership wrong
-        try {
-          await assertProfilesReadyForPay(deps, parsedBody);
-        } catch (err) {
-          if (err instanceof NotFoundError) {
-            return reply.status(404).send({
-              success: false,
-              errorCode: 'NOT_FOUND',
-              message: err.message,
-              bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
-            });
+        // If UUIDs provided, verify they exist before settling
+        if (parsedPaidInput.founderProfileId && parsedPaidInput.startupProfileId) {
+          try {
+            await assertProfilesReadyForPay(
+              deps,
+              parsedPaidInput.founderProfileId,
+              parsedPaidInput.startupProfileId
+            );
+          } catch (err) {
+            if (err instanceof NotFoundError) {
+              return reply.status(404).send({
+                success: false,
+                errorCode: 'NOT_FOUND',
+                message: err.message,
+                bodyModes: A2MCP_BODY_MODES,
+                bootstrapUrl: `${A2MCP_PUBLIC_BASE_URL}/v1/a2mcp/bootstrap`,
+              });
+            }
+            if (err instanceof AuthorizationError) {
+              return reply.status(403).send({
+                success: false,
+                errorCode: 'FORBIDDEN',
+                message: err.message,
+              });
+            }
+            throw err;
           }
-          if (err instanceof AuthorizationError) {
-            return reply.status(403).send({
-              success: false,
-              errorCode: 'FORBIDDEN',
-              message: err.message,
-            });
-          }
-          throw err;
         }
       }
 
       await runPaidA2mcpHandler(deps.x402.httpServer, request, reply, async () => {
-        const body =
-          parsedBody ??
+        const input =
+          parsedPaidInput ??
           (() => {
             const parsed = PaidBodySchema.safeParse(request.body);
             if (!parsed.success) {
               throw new ApplicationError(
-                `Invalid body. Required fields: ${A2MCP_REQUIRED_BODY_FIELDS.join(', ')}. Optional: ${A2MCP_OPTIONAL_BODY_FIELDS.join(', ')}.`,
+                'Invalid body. Send founder+startup (auto-bootstrap) or founderProfileId+startupProfileId.',
                 parsed.error.flatten()
               );
             }
             return parsed.data;
           })();
 
-        // Defense in depth if payment path skipped body pre-check
-        await assertProfilesReadyForPay(deps, body);
+        // Payment verified — now resolve UUIDs or create profiles from inline body
+        const profiles = await resolvePaidProfiles(
+          deps,
+          input,
+          createFounder,
+          createStartup
+        );
 
         const result = await withTimeout(
           adapter.executeService(
             service,
-            body.founderProfileId,
-            body.startupProfileId,
-            body.blueprintId
+            profiles.founderProfileId,
+            profiles.startupProfileId,
+            profiles.blueprintId
           ),
           SERVICE_EXECUTION_TIMEOUT_MS,
           service
@@ -420,6 +555,12 @@ export async function registerA2mcpRoutes(
             contentMarkdown: result.contentMarkdown,
           },
           generation: result.generation,
+          profiles: {
+            founderProfileId: profiles.founderProfileId,
+            startupProfileId: profiles.startupProfileId,
+            bootstrapped: profiles.bootstrapped,
+            founderReused: profiles.founderReused ?? false,
+          },
           paymentNetwork: deps.x402.network,
           feeToken: XLAYER_USDT0_ASSET,
         };
